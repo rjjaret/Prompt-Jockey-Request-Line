@@ -35,8 +35,9 @@ venv/
 **/Makefile
 
 # macOS app/runtime artifacts
-runtime/
 *.app/
+!prebuilt/
+!prebuilt/*.app.zip
 
 # Logs and temp
 *.log

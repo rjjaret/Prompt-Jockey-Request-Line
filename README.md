@@ -4,66 +4,93 @@ This service accepts inbound SMS webhook calls and creates a new node in Collide
 ## What this gives you
 A user can text Prompt Jockey, and that text appears as a node in Collider.
 
-## 2-minute demo checklist
-Use this for the fastest end-to-end test with a real phone.
+## Quick Start (Minimal)
+Use this path for the fastest working setup.
 
-1. Start the bridge:
+1. Activate your Python environment:
 
 ```bash
 source .venv/bin/activate
-uvicorn app.main:app --host 127.0.0.1 --port 8000 --reload
 ```
 
-2. Start ngrok in another terminal:
-
-```bash
-ngrok http 8000
-```
-
-3. In Twilio, set your number/messaging webhook:
-- `A message comes in`: `https://<your-ngrok-domain>/webhooks/sms`
-- Method: `HTTP POST`
-- where <your-ngrok-domain> comes from the terminal output after you start ngrok. note that 
-- this changes each time you restart ngrok, and twilio needs to be updated with the new one.
-
-4. Open the app:
-
-```bash
-open "runtime/Prompt Jockey Request Line.app"
-```
-
-5. Text your Twilio number from your phone.
-
-Expected result: one new prompt request node appears in Collider for each SMS.
-
-## Quick start
-1. Create and activate a Python environment (recommended Python 3.12).
 2. Install dependencies:
 
 ```bash
 pip install -r requirements.txt
 ```
 
-3. Create `.env` from the sample:
+3. Set transport mode for desktop app integration:
+
+```bash
+export COLLIDER_TRANSPORT=defaults
+```
+
+4. Start the bridge API:
+
+```bash
+uvicorn app.main:app --host 127.0.0.1 --port 8000 --reload
+```
+
+5. Start ngrok in another terminal:
+
+```bash
+ngrok http 8000
+```
+
+6. In Twilio (or another sms forwarding service - I rented a number in Twilio), set your number webhook from the Forwarding url in the ngrok output:
+- `A message comes in`: `https://<your-ngrok-domain>/webhooks/sms`
+- Method: `HTTP POST`
+  Note that this can change when you restart ngrok, in which case the forwarding service needs to be updated.
+
+
+7. Open the app:
+```bash
+./scripts/ensure_prebuilt_app.sh
+open "prebuilt/Prompt Jockey Request Line.app"
+```
+
+Then text your Twilio number. Each SMS should create one prompt request node.
+
+---
+
+## Other Operations and Configuration
+
+### Optional `.env` file
+You do not need a `.env` file if you export vars in your shell.
+
+If you prefer `.env`:
 
 ```bash
 cp .env.example .env
 ```
 
-4. Fill in at least:
-- `COLLIDER_TRANSPORT`
+For desktop defaults mode, the only required setting is:
 
-If `COLLIDER_TRANSPORT=http`:
-- `COLLIDER_BASE_URL`
+```dotenv
+COLLIDER_TRANSPORT=defaults
+```
+
+
+### HTTP mode (instead of desktop defaults mode)
+Use this if you want to send prompts to a Collider HTTP API.
+
+Required:
+
+```dotenv
+COLLIDER_TRANSPORT=http
+COLLIDER_BASE_URL=http://localhost:8080
+```
+
 
 Optional:
-- `COLLIDER_API_TOKEN` (only if your Collider instance requires auth)
+- `COLLIDER_API_TOKEN`
+- `COLLIDER_CREATE_NODE_PATH` (default `/api/nodes`)
+- `COLLIDER_NODE_TYPE` (default `prompt`)
 
-5. Run the API:
-
-```bash
-uvicorn app.main:app --host 0.0.0.0 --port 8000
-```
+### Twilio + ngrok notes
+- Free ngrok URLs usually change on restart, so update your Twilio webhook URL when that happens.
+- Twilio trial accounts only accept messages from verified senders.
+- Paid Twilio numbers allow broader inbound SMS.
 
 ## Webhook endpoint
 - Method: `POST`
@@ -115,6 +142,7 @@ In `http` mode, each SMS creates a request to Collider:
 }
 ```
 
+
 You can change:
 - `COLLIDER_CREATE_NODE_PATH` (default `/api/nodes`)
 - `COLLIDER_NODE_TYPE` (default `prompt`)
@@ -123,52 +151,3 @@ In `defaults` mode, each SMS writes:
 - `defaults write <COLLIDER_BUNDLE_ID> <COLLIDER_PROMPT_KEY> "<SMS body>"`
 
 In addition, each SMS is always appended to `Collider_PromptHistory` and the app index `Collider_HistoryIndex` is advanced to the latest entry. This maps each incoming text to its own history/node item in the dedicated variant.
-
-## Twilio + ngrok setup (real phone SMS)
-Use this when you want anyone to text a Twilio number and have prompts appear in Collider.
-
-1. Install and configure ngrok (one-time):
-
-```bash
-brew install ngrok/ngrok/ngrok
-ngrok config add-authtoken <YOUR_NGROK_AUTHTOKEN>
-```
-
-2. Configure the bridge `.env` for desktop Collider defaults mode:
-- `COLLIDER_TRANSPORT=defaults`
-- `COLLIDER_BUNDLE_ID=com.google.promptjockeyrequestline`
-- `COLLIDER_PROMPT_KEY=Collider_Prompt`
-- Leave `WEBHOOK_SHARED_SECRET` empty for Twilio tests.
-
-3. Start the bridge server:
-
-```bash
-uvicorn app.main:app --host 127.0.0.1 --port 8000 --reload
-```
-
-4. In another terminal, start ngrok:
-
-```bash
-ngrok http 8000
-```
-
-5. Copy the HTTPS forwarding URL from ngrok, then append `/webhooks/sms`.
-Example:
-- `https://abcd-1234.ngrok-free.app/webhooks/sms`
-
-6. In Twilio Console, buy or select an SMS-capable number and set:
-- `A message comes in` webhook URL: your ngrok URL with `/webhooks/sms`
-- Method: `HTTP POST`
-
-7. Open the app and test:
-
-```bash
-open "runtime/Prompt Jockey Request Line.app"
-```
-
-Then text the Twilio number from your phone. Each SMS should create one prompt request node.
-
-### Twilio notes
-- Twilio trial accounts restrict who can message your number (verified senders only).
-- Paid Twilio numbers allow public inbound SMS.
-- Free ngrok URLs change when restarted; update Twilio webhook URL each time unless you use a reserved ngrok domain.

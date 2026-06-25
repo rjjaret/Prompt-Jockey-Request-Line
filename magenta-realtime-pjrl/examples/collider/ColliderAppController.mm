@@ -804,6 +804,62 @@ static BOOL isDevServerRunning(void) {
     });
 }
 
+- (void)autoSelectDefaultModelIfAvailable {
+    NSData* bookmark = [[NSUserDefaults standardUserDefaults] objectForKey:@"MagentaRT_ModelFolderBookmark"];
+    NSURL* modelsDir = nil;
+    BOOL accessGranted = NO;
+
+    if (bookmark) {
+        BOOL stale = NO;
+        modelsDir = [NSURL URLByResolvingBookmarkData:bookmark
+                                              options:NSURLBookmarkResolutionWithSecurityScope
+                                        relativeToURL:nil
+                                  bookmarkDataIsStale:&stale
+                                                error:nil];
+        if (modelsDir) {
+            accessGranted = [modelsDir startAccessingSecurityScopedResource];
+        }
+    }
+
+    if (!modelsDir) {
+        std::string defaultPath = magentart::paths::get_models_dir();
+        modelsDir = [NSURL fileURLWithPath:[NSString stringWithUTF8String:defaultPath.c_str()]];
+    } else {
+        NSString *nestedModelsPath = [modelsDir.path stringByAppendingPathComponent:@"models"];
+        BOOL nestedIsDir = NO;
+        if ([[NSFileManager defaultManager] fileExistsAtPath:nestedModelsPath isDirectory:&nestedIsDir] && nestedIsDir) {
+            modelsDir = [NSURL fileURLWithPath:nestedModelsPath];
+        }
+    }
+
+    [[NSFileManager defaultManager] createDirectoryAtURL:modelsDir withIntermediateDirectories:YES attributes:nil error:nil];
+    NSArray<NSString *> *modelFiles = [MagentaModelManager listLocalModelsInDirectory:modelsDir];
+
+    if (accessGranted) {
+        [modelsDir stopAccessingSecurityScopedResource];
+    }
+
+    if (modelFiles.count == 0) {
+        return;
+    }
+
+    NSString *preferredModel = modelFiles[0];
+    NSRegularExpression *baseNameRegex = [NSRegularExpression regularExpressionWithPattern:@"(^|[-_ .])base($|[-_ .])"
+                                                                                    options:NSRegularExpressionCaseInsensitive
+                                                                                      error:nil];
+
+    for (NSString *candidate in modelFiles) {
+        NSString *name = candidate.lastPathComponent.stringByDeletingPathExtension;
+        NSRange fullRange = NSMakeRange(0, name.length);
+        if ([baseNameRegex firstMatchInString:name options:0 range:fullRange]) {
+            preferredModel = candidate;
+            break;
+        }
+    }
+
+    [self handleSelectModel:preferredModel];
+}
+
 // ─── Audio prompt loading ────────────────────────────────────────────────────
 
 - (void)handleLoadAudioPrompt:(int)index {

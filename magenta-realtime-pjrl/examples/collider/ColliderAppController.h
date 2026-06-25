@@ -47,6 +47,7 @@ struct ColliderSharedState {
 - (void)sendStateUpdate:(NSDictionary*)state;
 - (void)restoreSavedParams;
 - (void)handleLoadModel;
+- (void)autoSelectDefaultModelIfAvailable;
 - (void)showReactSettings;
 - (void)sendPlayState:(BOOL)playing;
 // Param bridging — also used by settings window

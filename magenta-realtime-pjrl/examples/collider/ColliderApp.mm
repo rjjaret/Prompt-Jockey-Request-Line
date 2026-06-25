@@ -812,9 +812,10 @@ static NSSlider* makeSlider(CGFloat x, CGFloat y, CGFloat w, double min, double 
 
 - (void)autoLoadModel {
     NSString* modelPath = [[NSUserDefaults standardUserDefaults] stringForKey:@"Collider_ModelPath"];
-    if (!modelPath) return;
-
-    if (![[NSFileManager defaultManager] fileExistsAtPath:modelPath]) return;
+    if (!modelPath || ![[NSFileManager defaultManager] fileExistsAtPath:modelPath]) {
+        [_controller autoSelectDefaultModelIfAvailable];
+        return;
+    }
 
     NSLog(@"Collider: Auto-loading model from %@", modelPath);
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
@@ -837,6 +838,7 @@ static NSSlider* makeSlider(CGFloat x, CGFloat y, CGFloat w, double min, double 
             NSLog(@"Collider: Failed to auto-load model from %@", modelPath);
             dispatch_async(dispatch_get_main_queue(), ^{
                 [self->_controller sendStateUpdate:@{@"modelName": @"No model loaded"}];
+                [self->_controller autoSelectDefaultModelIfAvailable];
             });
         }
     });
