@@ -43,7 +43,7 @@ ngrok http 8000
   Note that this can change when you restart ngrok, in which case the forwarding service needs to be updated.
 
 
-7. Open the app:
+7. Open the app in another terminal window:
 ```bash
 ./scripts/ensure_prebuilt_app.sh
 open "prebuilt/Prompt Jockey Request Line.app"
