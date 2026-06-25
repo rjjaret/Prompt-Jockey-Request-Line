@@ -1,0 +1,43 @@
+.DS_Store
+
+# Local configuration and secrets
+.env
+.env.*
+!.env.example
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+.coverage.*
+htmlcov/
+.venv/
+venv/
+
+# Node
+**/node_modules/
+**/dist/
+
+# CMake / native build outputs
+**/build/
+**/build-*/
+**/CMakeFiles/
+**/CMakeCache.txt
+**/cmake_install.cmake
+**/CPackConfig.cmake
+**/CPackSourceConfig.cmake
+**/compile_commands.json
+**/Makefile
+
+# macOS app/runtime artifacts
+runtime/
+*.app/
+
+# Logs and temp
+*.log
+tmp/
