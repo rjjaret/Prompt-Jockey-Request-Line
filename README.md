@@ -1,6 +1,9 @@
 # Prompt Jockey SMS -> Collider Bridge
 This service accepts inbound SMS webhook calls and creates a new node in Collider for each text prompt.
 
+Demo video:
+https://vimeo.com/1205849400?fl=ip&fe=ec
+
 ## What this gives you
 A user can text Prompt Jockey, and that text appears as a node in Collider.
 
